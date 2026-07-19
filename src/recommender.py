@@ -26,7 +26,7 @@ class UserProfile:
     Required by tests/test_recommender.py
     """
     favorite_genres: List[str]           # one or more genres the user likes, e.g. ["pop", "indie pop"]
-    favorite_mood: str
+    favorite_moods: List[str]            # one or more moods the user likes, e.g. ["happy", "chill"]
     target_energy: Tuple[float, float]   # acceptable energy range as (min, max), e.g. (0.6, 0.9)
     likes_acoustic: bool
 
@@ -135,10 +135,18 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     reasons: List[str] = []
 
     favorite_genres = user_prefs.get("favorite_genres") or []
-    favorite_mood = user_prefs.get("favorite_mood") or user_prefs.get("mood")
+    favorite_moods = (
+        user_prefs.get("favorite_moods")
+        or user_prefs.get("favorite_mood")
+        or user_prefs.get("mood")
+        or []
+    )
+    if isinstance(favorite_moods, str):     # accept a single mood as a plain string
+        favorite_moods = [favorite_moods]
     song_genre = (song.get("genre") or "").strip().lower()
     song_mood = (song.get("mood") or "").strip().lower()
     favorites = [g.strip().lower() for g in favorite_genres]
+    favorite_moods = [m.strip().lower() for m in favorite_moods]
 
     # Rule 1 - Genre (up to 4 pts): exact match, else partial credit for a shared word.
     if song_genre and song_genre in favorites:
@@ -186,15 +194,16 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
             f"({lo:.2f}-{hi:.2f}) (+0 pts)"
         )
 
-    # Rule 3 - Mood (up to 2 pts): exact match only.
-    if favorite_mood and song_mood == str(favorite_mood).strip().lower():
+    # Rule 3 - Mood (up to 2 pts): exact match against any favorite mood.
+    if song_mood and song_mood in favorite_moods:
         points += MOOD_MATCH_POINTS
         reasons.append(
-            f"mood '{song_mood}' matches your favorite mood (+{MOOD_MATCH_POINTS:.0f} pts)"
+            f"mood '{song_mood}' is one of your favorite moods (+{MOOD_MATCH_POINTS:.0f} pts)"
         )
-    elif favorite_mood and song_mood:
+    elif favorite_moods and song_mood:
         reasons.append(
-            f"mood '{song_mood}' differs from your favorite '{str(favorite_mood).strip().lower()}' (+0 pts)"
+            f"mood '{song_mood}' isn't one of your favorites "
+            f"({', '.join(favorite_moods)}) (+0 pts)"
         )
 
     score = points / MAX_POINTS      # always between 0 and 1
@@ -219,4 +228,4 @@ def recommend_songs(user_prefs: Dict, songs: List[Dict], k: int = 5) -> List[Tup
     # RANKING: score DESC, then genre match DESC, then id ASC (stable & deterministic).
     scored.sort(key=lambda x: (-x[1], -x[3], x[0].get("id", 0)))
 
-    return [(song, score, explanation) for song, score, explanation, _ in scored[:k]]
+    return [(song, score, explanation) for song, score, explanation, _ in scored[:k]] 
