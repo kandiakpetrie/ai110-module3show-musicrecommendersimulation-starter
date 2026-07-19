@@ -17,6 +17,36 @@ Replace this paragraph with your own summary of what your version does.
 
 ---
 
+## How Real-World Recommenders Work
+
+Before I get into my own system, here's how I think the big ones like Spotify and
+YouTube actually pull this off. The way I see it, it really breaks down into three
+separate things, and it helped me to stop lumping them together.
+
+First is the input data, which is just the songs themselves turned into numbers.
+Spotify doesn't "hear" a song, it stores stuff about it like the genre, the mood
+(happy vs sad), the tempo in beats per minute, and how much energy it has. That part
+is all about the song and has nothing to do with who's listening yet.
+
+Second is the user preferences, which is basically a profile of you. It doesn't
+just ask what you like, it watches your history like what you played, what you
+skipped, what you saved or replayed, and turns that into your taste, like your go-to
+genres, your usual mood, and the energy level you tend to reach for. So this side is
+learned from what you actually do, not from what you type in.
+
+Third is the ranking and selection, which is where it turns all that into an
+actual recommendation. It gives every song a score by checking how close the song's
+features (part one) are to your taste (part two), then it ranks them from best to
+worst and just hands you the top few. That's why me and my friend can have the same
+songs available but totally different playlists. Same catalog, but our preferences
+and our rankings aren't the same.
+
+The big takeaway for me is that a recommender isn't really "understanding" music at
+all, it's just measuring how close each song is to your taste and sorting by that.
+My own system below is a stripped-down version of those same three steps.
+
+---
+
 ## How The System Works
 
 Explain your design in plain language.
@@ -222,6 +252,8 @@ Read and complete `model_card.md`:
 [**Model Card**](model_card.md)
 
 Write 1 to 2 paragraphs here about what you learned:
+
+The biggest thing I learned is that a recommender is only as good as the data behind it, my scoring could be perfect and it'd still fail if the catalog has no afrobeat or ballad songs to give you. What surprised me most was how easily the filter bubble sneaks in: weighting genre so heavily meant the model basically just handed people more of what they already picked. Now when a real app like Spotify keeps feeding me the same vibe, I get why the math is quietly rewarding my past taste instead of pushing me somewhere new.
 
 - about how recommenders turn data into predictions
 - about where bias or unfairness could show up in systems like this
